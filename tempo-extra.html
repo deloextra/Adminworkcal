@@ -443,14 +443,14 @@
 
 
   async function sbFetch(path, opts){
-    var res = await fetch(SB.url+'/rest/v1/'+path, Object.assign({
-      headers:{
-        'apikey': SB.key,
-        'Authorization': 'Bearer '+SB.key,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      }
-    }, opts));
+    opts = opts || {};
+    var headers = Object.assign({
+      'apikey': SB.key,
+      'Authorization': 'Bearer '+SB.key,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    }, opts.headers || {});
+    var res = await fetch(SB.url+'/rest/v1/'+path, Object.assign({}, opts, { headers: headers }));
     if(!res.ok){ var t=await res.text(); throw new Error(t); }
     return res.status===204 ? null : res.json();
   }
@@ -483,7 +483,7 @@
         await sbFetch('tempo_extra?user_id=eq.'+encodeURIComponent(SB.user)+'&day=eq.'+day,
           {method:'DELETE'});
       } else {
-        await sbFetch('tempo_extra', {
+        await sbFetch('tempo_extra?on_conflict=user_id,day', {
           method:'POST',
           headers:{'Prefer':'resolution=merge-duplicates,return=representation'},
           body: JSON.stringify({user_id:SB.user, day:day, count:count})
